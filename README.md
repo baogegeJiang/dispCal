@@ -2,7 +2,7 @@
 
 This is a python package based on cython to calculate the dispersion curves and their kernels with respect to the layers velocities, density and thickness. It is modified from Herrmann's seismic computation programs. To reduce the calculation cost, I use the local gradient to estimate the group velocity and sensitive kernels. Using the cyhon to speed up, it  have similar efficiency with the original fortran ones.
 
-you can install the program via 
+you can install the program via
 
 ```
 pip install dispCal
@@ -52,7 +52,7 @@ One need to notice that the kernel is just like  K = dc/dm. The m are the paramt
 
 [![DOI](https://zenodo.org/badge/496537113.svg)](https://zenodo.org/badge/latestdoi/496537113)
 
-# Reference
+## References
 
 the original fortran is from Herrmann:
 

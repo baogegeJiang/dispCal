@@ -1,6 +1,6 @@
 # dispCal
 
-This is a python package based on cython to calculate the dispersion curves and their kernels with respect to the layers velocities, density and thickness. It is modified from Herrmann's seismic computation programs. To reduce the calculation cost, I use the local derivation to estimate the group velocity and kernels. Using the cyhon to speed up, it  have similar efficiency with the original fortran ones.
+This is a python package based on cython to calculate the dispersion curves and their kernels with respect to the layers velocities, density and thickness. It is modified from Herrmann's seismic computation programs. To reduce the calculation cost, I use the local gradient to estimate the group velocity and sensitive kernels. Using the cyhon to speed up, it  have similar efficiency with the original fortran ones.
 
 you can install the program via 
 
@@ -30,6 +30,7 @@ periods = np.arange(1,30,1).astype(np.float64)#better from show periods to long 
     domega: for group velocitu and its kernel; the real step is given by domega*omega0;for calculating group velocity's' kernels, domegaUsed =domega/100,dcUsed=dc0/5
     mode: from 1
     ar : the radius for flatting
+    smoothN: a new feature under construction
 '''
 #phase velocity
 velocities = calDisp(thickness, vp, vs, rho, periods,wave='love', mode=1, velocity='phase', flat_earth=True,ar=6370,dc0=0.005)
@@ -49,11 +50,7 @@ One need to notice that the kernel is just like  K = dc/dm. The m are the paramt
 
 # cite
 
-```
 [![DOI](https://zenodo.org/badge/496537113.svg)](https://zenodo.org/badge/latestdoi/496537113)
-```
-
----
 
 # Reference
 

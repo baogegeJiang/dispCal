@@ -49,6 +49,9 @@ One need to notice that the kernel is just like  K = dc/dm. The m are the paramt
 
 # cite
 
+```
+[![DOI](https://zenodo.org/badge/496537113.svg)](https://zenodo.org/badge/latestdoi/496537113)
+```
 
 ---
 

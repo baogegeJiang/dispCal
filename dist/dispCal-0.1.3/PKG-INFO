@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: dispCal
+Version: 0.1.3
+Summary: Calculate Surface Wave Dispersion
+Author: baogege
+Classifier: Programming Language :: Python :: 3
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Other Environment
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+License-File: LICENSE

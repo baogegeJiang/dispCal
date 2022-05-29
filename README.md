@@ -17,7 +17,7 @@ thickness = np.array([10, 22, 12., 0])
 vs = np.array([3, 3.5, 4, 4.3])
 vp = vs * 1.7
 rho = vp /3
-periods = np.arange(1,30,1).astype(np.float64)#better from show periods to long ones
+periods = np.arange(1,30,1).astype(np.float64)#better from short periods to long ones
 
 
 '''

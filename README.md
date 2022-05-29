@@ -8,7 +8,7 @@ you can install the program via
 pip install dispCal
 ```
 
-the usage is shown below:
+I give some examples:
 
 ```
 from dispCal.disp import calDisp

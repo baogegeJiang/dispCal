@@ -211,6 +211,8 @@ cpdef double[:,:] kernel(double[:] D, double[:]A,double[:] B,double[:] Rho,doubl
         for j in xrange(TN):
             omega = twopi/T[j]
             wvno =  omega/c[j]
+            if ddcL[j]==0.0:
+                ddcL[j]=1.401298E-45
             if isR:
                 K[i,j] = (dltarR(d,a,b,rho,wvno,omega,LN)-det0L[j])/dc0/ddcL[j]
             else:
@@ -345,7 +347,7 @@ cpdef double[:,:] kernelGroup(double[:] D, double[:]A,double[:] B,double[:] Rho,
     dc0 = dc0/100.0
     #print(domega)
     for i in xrange(TN):
-        if c[i]<=0:
+        if c[i]<=0.0:
             continue
         omega = twopi/T[i]
         wvno =  twopi/T[i]/c[i]
@@ -433,6 +435,8 @@ cpdef double[:,:] kernelGroup(double[:] D, double[:]A,double[:] B,double[:] Rho,
                 continue
             omega = twopi/T[j]
             wvno =  twopi/T[j]/c[j]
+            if ddcL[j]==0.0:
+                ddcL[j]=1.401298E-45
             if isR:
                 DC = -(dltarR(d,a,b,rho,wvno,omega,LN)-det0L[j])/ddcL[j]
             else:

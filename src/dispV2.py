@@ -23,7 +23,7 @@ cdef double sign(double x):
 cdef double del1st
 cdef int jsol
 cdef int index
-cdef double a[1000],b[1000],d[1000],rho[1000],X[20],Y[20]
+cdef double a[500],b[500],d[500],rho[200],X[20],Y[20]
 #cdef double xka,xkb,wvnop,wvnom,rb,ra,t,gammk,gamm1,rho1,e1,e2,xmu,q,y,z,cosq,sinq,fac,e01,e20,xnor,ynor,wvno2,dpth,p,znul,plmn
 #cdef int   i0
 cdef double E0,E1,E2,E3,E4
@@ -956,7 +956,7 @@ cdef double dltarR(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,dou
             tmp = E31
         if E41>tmp:
             tmp = E41
-        if tmp<0.000000000001:
+        if tmp<0.00000000001:
             tmp=1
         E0 = E01/tmp
         E1 = E11/tmp

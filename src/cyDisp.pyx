@@ -1,5 +1,5 @@
 # cython: initializedcheck=False
-# cython: cdivision=False
+# cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
 import numpy as np
@@ -751,8 +751,8 @@ cdef int CalDisp(double[:] D,double[:] A,double[:] B,double[:] Rho,double[:] T,d
             #print(d,a,b,rho,t1,c1,clow,dc,cm,betmx,isR,ifirst,LN)
             #return 0
             c[k]=getsol(d,a,b,rho,t1,c1,clow,dc,cm,betmx,isR,ifirst,LN)
-            if c[k]<0:
-                print(c1,clow,dc,cm,betmx,t1)
+            #if c[k]<0:
+            #    print(c1,clow,dc,cm,betmx,t1)
             #print(del1st)
             #print(c[0])
     return 0
@@ -1187,6 +1187,8 @@ cdef double getsol(double[:] d,double[:]a,double[:]b,double[:]rho,double t1,doub
     c     go below the floor of clow, when the direction is reversed
     c-----
     '''
+    if c1<0:
+        return -3.0
     for i in xrange(3000):
         if(idir>0):
             c2 = c1 + dc
@@ -1222,7 +1224,7 @@ cdef double getsol(double[:] d,double[:]a,double[:]b,double[:]rho,double t1,doub
             return c1
     return c1
 #@jit
-cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double t,double c1,double c2,double del1,double del2,bint isR,double twopi,int LN):
+cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double t,double c1,double c2,double del1,double del2,bint isR,double twopi,int LN) except? -2.0:
     '''
     c-----
     c   hybrid method for refining root once it has been bracketted

@@ -58,7 +58,7 @@ cdef int amin( double[:] x,int N):
             tmp = x[i]
             iTmp = i
     return iTmp
-cpdef double[:] calDisp(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.005,bint isFlat=False, double ar=6370):
+cpdef double[:] calDisp(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.005,bint isFlat=False, double ar=6370,double[:] Q=np.zeros([])):
     #print(A[0],B[0])
     cdef int LN,TN
     LN = len(A)

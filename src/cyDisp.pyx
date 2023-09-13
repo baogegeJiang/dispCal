@@ -58,7 +58,7 @@ cdef int amin( double[:] x,int N):
             tmp = x[i]
             iTmp = i
     return iTmp
-cpdef double[:] calDisp(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.005,bint isFlat=False, double ar=6370):
+cpdef double[:] calDisp(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T,double[:]Qp,double[:]Qs,double fRef, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.005,bint isFlat=False, double ar=6370):
     #print(A[0],B[0])
     cdef int LN,TN
     LN = len(A)
@@ -66,54 +66,10 @@ cpdef double[:] calDisp(double[:] D, double[:]A,double[:] B,double[:] Rho,double
     #C = np.array(TN, dtype=np.float64)
     cdef double[:] c
     c=np.zeros(TN, dtype=np.float64)
-    CalDisp(D, A, B, Rho,T,c,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
+    CalDisp(D, A, B, Rho,T,c,Qp,Qs,fRef,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
     return c
 
-cpdef double[:] group__(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.01):
-    #print(A[0],B[0])
-    cdef int LN,TN
-    LN = len(A)
-    TN = len(T)
-    cdef int i,j
-    cdef double twopi=2*3.141592653589793
-    cdef double omega,wvno,det0,dd,DOmega,DK,dOmega,dK
-    cdef double[:] vg ,c
-    global d,a,b,rho
-    vg =np.zeros(TN, dtype=np.float64) 
-    c=np.zeros(TN, dtype=np.float64)
-    CalDisp(D, A, B, Rho,T,c,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
-    dc0 = dc0/100
-    for i in xrange(TN):
-        DOmega =twopi/T[i]*(domega)
-        omega = twopi/T[i]-DOmega
-        wvno =  twopi/T[i]/c[i]
-        if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-        else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-        omega = twopi/T[i]+DOmega
-        wvno  =  twopi/T[i]/c[i]
-        if isR:
-            dOmega = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-        else:
-            dOmega = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-        #print(dltarR(d,a,b,rho,wvno,omega,LN),det0,DOmega,dOmegaL[i])
-        DK =twopi/T[i]/c[i]*(domega)
-        omega = twopi/T[i]
-        wvno  =  twopi/T[i]/c[i]-DK
-        if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-        else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-        omega = twopi/T[i]
-        wvno  =  twopi/T[i]/c[i]+DK
-        if isR:
-            dK = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DK/2
-        else:
-            dK = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DK/2
-        vg[i]=-dK/dOmega
-    return vg
-cpdef double[:] group(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.01):
+cpdef double[:] group(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T,double[:]Qp,double[:]Qs,double fRef, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.01):
     #print(A[0],B[0])
     cdef int LN,TN
     LN = len(A)
@@ -125,7 +81,7 @@ cpdef double[:] group(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:
     global d,a,b,rho
     vg =np.zeros(TN, dtype=np.float64) 
     c=np.zeros(TN, dtype=np.float64)
-    CalDisp(D, A, B, Rho,T,c,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
+    CalDisp(D, A, B, Rho,T,c,Qp,Qs,fRef,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
     dc0 = dc0/100
     for i in xrange(TN):
         if c[i]<=0:
@@ -134,31 +90,31 @@ cpdef double[:] group(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:
         omega = twopi/T[i]-DOmega
         wvno =  omega/c[i]
         if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         omega = twopi/T[i]+DOmega
         wvno  =  omega/c[i]
         if isR:
-            dOmega = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
+            dOmega = (dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/DOmega/2
         else:
-            dOmega = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-        #print(dltarR(d,a,b,rho,wvno,omega,LN),det0,DOmega)
+            dOmega = (dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/DOmega/2
+        #print(dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN),det0,DOmega)
         omega = twopi/T[i]
         wvno  =  twopi/T[i]/(c[i]-dc0)
         if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         omega = twopi/T[i]
         wvno  =  twopi/T[i]/(c[i]+dc0)
         if isR:
-            dC = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/dc0/2
+            dC = (dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/dc0/2
         else:
-            dC = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/dc0/2
+            dC = (dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/dc0/2
         vg[i]=c[i]/(1+dOmega/dC/c[i]*twopi/T[i])
     return vg
-cpdef double[:,:] kernel(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.001,bint isP=False,bint isS=False,bint isD=False,bint isRho=False):
+cpdef double[:,:] kernel(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T,double[:]Qp,double[:]Qs,double fRef, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.001,bint isP=False,bint isS=False,bint isD=False,bint isRho=False):
     #print(A[0],B[0])
     cdef int LN,TN
     LN = len(A)
@@ -174,21 +130,21 @@ cpdef double[:,:] kernel(double[:] D, double[:]A,double[:] B,double[:] Rho,doubl
     K=np.zeros([LN,TN], dtype=np.float64)
     det0L = np.zeros(TN, dtype=np.float64)
     ddcL  = np.zeros(TN, dtype=np.float64)
-    CalDisp(D, A, B, Rho,T,c,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
+    CalDisp(D, A, B, Rho,T,c,Qp,Qs,fRef,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
     dc0 = dc0/10
     for i in xrange(TN):
         omega = twopi/T[i]
         wvno =  omega/c[i]
         if isR:
-            det0L[i] = dltarR(d,a,b,rho,wvno,omega,LN)
+            det0L[i] = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         else:
-            det0L[i] = dltarL(d,a,b,rho,wvno,omega,LN)
+            det0L[i] = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         omega = twopi/T[i]
         wvno  =  omega/(c[i]+dc0)
         if isR:
-            ddcL[i] = -(dltarR(d,a,b,rho,wvno,omega,LN)-det0L[i])/dc0
+            ddcL[i] = -(dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0L[i])/dc0
         else:
-            ddcL[i] = -(dltarL(d,a,b,rho,wvno,omega,LN)-det0L[i])/dc0
+            ddcL[i] = -(dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0L[i])/dc0
     if isP:
         P = A
         p = a
@@ -214,9 +170,9 @@ cpdef double[:,:] kernel(double[:] D, double[:]A,double[:] B,double[:] Rho,doubl
             if ddcL[j]==0.0:
                 ddcL[j]=1.401298E-45
             if isR:
-                K[i,j] = (dltarR(d,a,b,rho,wvno,omega,LN)-det0L[j])/dc0/ddcL[j]
+                K[i,j] = (dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0L[j])/dc0/ddcL[j]
             else:
-                K[i,j] = (dltarL(d,a,b,rho,wvno,omega,LN)-det0L[j])/dc0/ddcL[j]
+                K[i,j] = (dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0L[j])/dc0/ddcL[j]
         if isFlat:
             P[i]=P[i]-dc0
             sphere(D, A, B, Rho, LN,isR, ar)
@@ -224,108 +180,7 @@ cpdef double[:,:] kernel(double[:] D, double[:]A,double[:] B,double[:] Rho,doubl
             p[i]=p[i]-dc0
     return K
 
-cpdef double[:,:] kernelGroup_(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.001,bint isP=False,bint isS=False,bint isD=False,bint isRho=False):
-    #print(A[0],B[0])
-    cdef int LN,TN
-    LN = len(A)
-    TN = len(T)
-    cdef int i,j
-    cdef double twopi=2*3.141592653589793
-    cdef double omega,wvno,ddc,det,dKdV,dOmegadV,det0,DOmega,DK
-    cdef double[:,:] K
-    cdef double[:]c,det0L,ddcL,dOmegaL,dkL
-    #cdef int aoundK
-    #cdef double aroundKD,aroundND
-    c=np.zeros(TN, dtype=np.float64)
-    K=np.zeros([LN,TN], dtype=np.float64)
-    det0L = np.zeros(TN, dtype=np.float64)
-    dOmegaL  = np.zeros(TN, dtype=np.float64)
-    dKL  = np.zeros(TN, dtype=np.float64)
-    CalDisp(D, A, B, Rho,T,c,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
-    dc0 = dc0/500
-    #print(domega)
-    for i in xrange(TN):
-        if c[i]<=0:
-            continue
-        DOmega =twopi/T[i]*(domega)
-        omega = twopi/T[i]-DOmega
-        wvno =  twopi/T[i]/c[i]
-        if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-        else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-        omega = twopi/T[i]+DOmega
-        wvno  =  twopi/T[i]/c[i]
-        if isR:
-            dOmegaL[i] = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-        else:
-            dOmegaL[i] = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-        #print(dltarR(d,a,b,rho,wvno,omega,LN),det0,DOmega,dOmegaL[i])
-        DK =twopi/T[i]/c[i]*(domega)
-        omega = twopi/T[i]
-        wvno  =  twopi/T[i]/c[i]-DK
-        if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-        else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-        omega = twopi/T[i]
-        wvno  =  twopi/T[i]/c[i]+DK
-        if isR:
-            dKL[i] = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DK/2
-        else:
-            dKL[i] = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DK/2
-        #print(-dKL[i]/dOmegaL[i],det0)
-        #print(DOmega,dOmegaL[i])
-    for i in xrange(LN):
-        if isS:
-            if isFlat:
-                B[i]=B[i]+dc0
-                sphere(D, A, B, Rho, LN,isR, ar)
-            else:
-                b[i]=b[i]+dc0
-        for j in xrange(TN):
-            if c[j]<=0:
-                continue
-            DOmega =twopi/T[j]*(domega)
-            omega = twopi/T[j]-DOmega
-            wvno =  twopi/T[j]/c[j]
-            if isR:
-                det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-            else:
-                det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-            omega = twopi/T[j]+DOmega
-            wvno  =  twopi/T[j]/c[j]
-            if isR:
-                dOmegadV = ((dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2-dOmegaL[j])/dc0
-            else:
-                dOmegadV =((dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2-dOmegaL[j])/dc0
-            #print((dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2,dOmegaL[j],dc0)
-            DK =twopi/T[j]/c[j]*(domega)
-            omega = twopi/T[j]
-            wvno  =  twopi/T[j]/c[j]-DK
-            if isR:
-                det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-            else:
-                det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-            omega = twopi/T[j]
-            wvno  =  twopi/T[j]/c[j]+DK
-            if isR:
-                dKdV = ((dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DK/2-dKL[j])/dc0
-            else:
-                dKdV = ((dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DK/2-dKL[j])/dc0
-            #
-            K[i,j]=-dKdV/dOmegaL[j]+dKL[j]/dOmegaL[j]**2*dOmegadV
-            #print(dKdV,dOmegadV,dltarR(d,a,b,rho,wvno,omega,LN),det0,omega,wvno,DK,dc0)
-            #print((dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DK/2-dKL[j],dc0)
-        if isS:
-            if isFlat:
-                B[i]=B[i]-dc0
-                sphere(D, A, B, Rho, LN,isR, ar)
-            else:
-                b[i]=b[i]-dc0
-    return K
-
-cpdef double[:,:] kernelGroup(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.001,bint isP=False,bint isS=False,bint isD=False,bint isRho=False,smoothN=1):
+cpdef double[:,:] kernelGroup(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T,double[:]Qp,double[:]Qs,double fRef, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.001,bint isP=False,bint isS=False,bint isD=False,bint isRho=False,smoothN=1):
     #print(A[0],B[0])
     cdef int LN,TN
     LN = len(A)
@@ -342,7 +197,7 @@ cpdef double[:,:] kernelGroup(double[:] D, double[:]A,double[:] B,double[:] Rho,
     det0L = np.zeros(TN, dtype=np.float64)
     ddcL  = np.zeros(TN, dtype=np.float64)
     gL  = np.zeros(TN, dtype=np.float64)
-    CalDisp(D, A, B, Rho,T,c,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
+    CalDisp(D, A, B, Rho,T,c,Qp,Qs,fRef,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
     dv0 = dc0/5
     dc0 = dc0/100.0
     #print(domega)
@@ -352,47 +207,47 @@ cpdef double[:,:] kernelGroup(double[:] D, double[:]A,double[:] B,double[:] Rho,
         omega = twopi/T[i]
         wvno =  twopi/T[i]/c[i]
         if isR:
-            det0L[i] = dltarR(d,a,b,rho,wvno,omega,LN)
+            det0L[i] = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         else:
-            det0L[i] = dltarL(d,a,b,rho,wvno,omega,LN)
+            det0L[i] = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         DOmega =twopi/T[i]*(domega)
         omega = twopi/T[i]-DOmega
         wvno =  omega/c[i]
         if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         omega = twopi/T[i]+DOmega
         wvno  =  omega/c[i]
         if isR:
-            dOmega = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
+            dOmega = (dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/DOmega/2
         else:
-            dOmega = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-        #print(dltarR(d,a,b,rho,wvno,omega,LN),det0,DOmega)
+            dOmega = (dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/DOmega/2
+        #print(dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN),det0,DOmega)
         omega = twopi/T[i]
         wvno  =  twopi/T[i]/(c[i]-dc0)
         if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         omega = twopi/T[i]
         wvno  =  twopi/T[i]/(c[i]+dc0)
         if isR:
-            dC = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/dc0/2
+            dC = (dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/dc0/2
         else:
-            dC = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/dc0/2
+            dC = (dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/dc0/2
         omega = twopi/T[i]
         wvno  =  twopi/T[i]/(c[i])
         if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
+            det0 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         omega = twopi/T[i]
         wvno  =  twopi/T[i]/(c[i]+dc0)
         if isR:
-            ddcL[i] = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/dc0
+            ddcL[i] = (dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/dc0
         else:
-            ddcL[i] = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/dc0
+            ddcL[i] = (dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/dc0
         gL[i]=dOmega/dC/c[i]*twopi/T[i]
         #print(gL[i])
         #print(ddcL[i],gL[i])
@@ -438,48 +293,45 @@ cpdef double[:,:] kernelGroup(double[:] D, double[:]A,double[:] B,double[:] Rho,
             if ddcL[j]==0.0:
                 ddcL[j]=1.401298E-45
             if isR:
-                DC = -(dltarR(d,a,b,rho,wvno,omega,LN)-det0L[j])/ddcL[j]
+                DC = -(dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0L[j])/ddcL[j]
             else:
-                DC = -(dltarL(d,a,b,rho,wvno,omega,LN)-det0L[j])/ddcL[j]
+                DC = -(dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0L[j])/ddcL[j]
             C = c[j]+DC
-            #print('#1',det0L[j],dltarR(d,a,b,rho,wvno,omega,LN))
+            #print('#1',det0L[j],dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN))
             omega = twopi/T[j]
             wvno =  twopi/T[j]/C
-            #print('#2',det0L[j],dltarR(d,a,b,rho,wvno,omega,LN))
+            #print('#2',det0L[j],dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN))
             DOmega =twopi/T[j]*(domega)
             omega = twopi/T[j]-DOmega
             wvno =  omega/C
             if isR:
-                det0 = dltarR(d,a,b,rho,wvno,omega,LN)
+                det0 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
             else:
-                det0 = dltarL(d,a,b,rho,wvno,omega,LN)
+                det0 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
             omega = twopi/T[j]+DOmega
             wvno  =  omega/C
             if isR:
-                dOmega = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
+                dOmega = (dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/DOmega/2
             else:
-                dOmega =(dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-            #print((dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2,dOmegaL[j],dc0)
+                dOmega =(dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/DOmega/2
+            #print((dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/DOmega/2,dOmegaL[j],dc0)
             omega = twopi/T[j]
             wvno  =  omega/(C-dc0)
             if isR:
-                det0 = dltarR(d,a,b,rho,wvno,omega,LN)
+                det0 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
             else:
-                det0 = dltarL(d,a,b,rho,wvno,omega,LN)
+                det0 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
             omega = twopi/T[j]
             wvno  =  omega/(C+dc0)
             if isR:
-                dC = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/dc0/2
+                dC = (dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/dc0/2
             else:
-                dC = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/dc0/2
+                dC = (dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/dc0/2
             #
             K[i,j]= (C/(1+dOmega/dC/C*omega)-c[j]/(1+gL[j]))/dv0
-            if i==20:
-                print((C/(1+dOmega/dC/C*omega)-c[j]/(1+gL[j]))/dv0)
-                #print(DC,c[j]/(1+gL[j]),dOmega/dc/C*omega,gL[j],(dOmega/dc/C*omega-gL[j]),(DC/(1+gL[j])-c[j]/(1+gL[j])**2*(dOmega/dC/C*omega-gL[j])),dc0)
             #print(dK/dOmega,gL[j],dK,dOmega)
-            #print(dKdV,dOmegadV,dltarR(d,a,b,rho,wvno,omega,LN),det0,omega,wvno,DK,dc0)
-            #print((dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DK/2-dKL[j],dc0)
+            #print(dKdV,dOmegadV,dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN),det0,omega,wvno,DK,dc0)
+            #print((dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)-det0)/DK/2-dKL[j],dc0)
         if smoothN==1:
             if isFlat:
                 P[i]=P[i]-dv0
@@ -495,163 +347,7 @@ cpdef double[:,:] kernelGroup(double[:] D, double[:]A,double[:] B,double[:] Rho,
                 for j in xrange(-smoothN+1,smoothN):
                     p[i+j]=p[i+j]-dv0*(1-<double>j/<double>smoothN)/DW
     return K
-cpdef double[:,:] kernelGroup__(double[:] D, double[:]A,double[:] B,double[:] Rho,double[:]T, int mode=1,bint isR=True, double sone0=1.5, double dc0=0.001,bint isFlat=False, double ar=6370,double domega = 0.001,double dh=0.01,bint isP=False,bint isS=False,bint isD=False,bint isRho=False,smoothN=1):
-    #print(A[0],B[0])
-    cdef int LN,TN
-    LN = len(A)
-    TN = len(T)
-    cdef int i,j
-    cdef double twopi=2*3.141592653589793
-    cdef double omega,wvno,ddc,det,dKdV,dOmegadV,det0,DOmega,DK,dK,dOmega,C,DW
-    cdef double[:,:] K
-    cdef double[:]c,det0L,ddcL,gL
-    #cdef int aoundK
-    #cdef double aroundKD,aroundND
-    c=np.zeros(TN, dtype=np.float64)
-    K=np.zeros([LN,TN], dtype=np.float64)
-    det0L = np.zeros(TN, dtype=np.float64)
-    ddcL  = np.zeros(TN, dtype=np.float64)
-    gL  = np.zeros(TN, dtype=np.float64)
-    CalDisp(D, A, B, Rho,T,c,LN, TN , mode,isR, sone0, dc0,isFlat, ar)
-    dc0 = dc0/500.0
-    #print(domega)
-    for i in xrange(TN):
-        if c[i]<=0:
-            continue
-        omega = twopi/T[i]
-        wvno =  twopi/T[i]/c[i]
-        if isR:
-            det0L[i] = dltarR(d,a,b,rho,wvno,omega,LN)
-        else:
-            det0L[i] = dltarL(d,a,b,rho,wvno,omega,LN)
-        DOmega =twopi/T[i]*(domega)
-        omega = twopi/T[i]-DOmega
-        wvno =  twopi/T[i]/c[i]
-        if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-        else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-        omega = twopi/T[i]+DOmega
-        wvno  =  twopi/T[i]/c[i]
-        if isR:
-            dOmega = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-        else:
-            dOmega = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-        #print(dltarR(d,a,b,rho,wvno,omega,LN),det0,DOmega)
-        DK =twopi/T[i]/c[i]*(domega)
-        omega = twopi/T[i]
-        wvno  =  twopi/T[i]/c[i]-DK
-        if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-        else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-        omega = twopi/T[i]
-        wvno  =  twopi/T[i]/c[i]+DK
-        if isR:
-            dK = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DK/2
-        else:
-            dK = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DK/2
-        omega = twopi/T[i]
-        wvno  =  twopi/T[i]/(c[i])
-        if isR:
-            det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-        else:
-            det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-        omega = twopi/T[i]
-        wvno  =  twopi/T[i]/(c[i]+dc0)
-        if isR:
-            ddcL[i] = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/dc0
-        else:
-            ddcL[i] = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/dc0
-        gL[i]=-dK/dOmega
-        #print(ddcL[i],gL[i])
-        #print(-dKL[i]/dOmegaL[i],det0)
-        #print(DOmega,dOmegaL[i])
-    
-    
-    for i in xrange(LN):
-        if isS:
-            if smoothN==1:
-                if isFlat:
-                    B[i]=B[i]+dc0
-                    sphere(D, A, B, Rho, LN,isR, ar)
-                else:
-                    b[i]=b[i]+dc0
-            else:
-                DW = 0
-                for j in xrange(-smoothN+1,smoothN):
-                    if (i+j)>=0 and (i+j)<LN:
-                        DW += D[i+j]/D[i]*(1-<double>j/<double>smoothN)
-                if isFlat:
-                    for j in xrange(-smoothN+1,smoothN):
-                        B[i+j]=B[i+j]+dc0*(1-<double>j/<double>smoothN)/DW
-                    sphere(D, A, B, Rho, LN,isR, ar)
-                else:
-                    for j in xrange(-smoothN+1,smoothN):
-                        b[i+j]=b[i+j]+dc0*(1-<double>j/<double>smoothN)/DW
-        for j in xrange(TN):
-            if c[j]<=0:
-                continue
-            omega = twopi/T[j]
-            wvno =  twopi/T[j]/c[j]
-            if isR:
-                C = c[j]-(dltarR(d,a,b,rho,wvno,omega,LN)-det0L[j])/ddcL[j]
-            else:
-                C = c[j]-(dltarL(d,a,b,rho,wvno,omega,LN)-det0L[j])/ddcL[j]
-            #print('#1',det0L[j],dltarR(d,a,b,rho,wvno,omega,LN))
-            omega = twopi/T[j]
-            wvno =  twopi/T[j]/C
-            #print('#2',det0L[j],dltarR(d,a,b,rho,wvno,omega,LN))
-            DOmega =twopi/T[j]*(domega)
-            omega = twopi/T[j]-DOmega
-            wvno =  twopi/T[j]/C
-            if isR:
-                det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-            else:
-                det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-            omega = twopi/T[j]+DOmega
-            wvno  =  twopi/T[j]/C
-            if isR:
-                dOmega = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-            else:
-                dOmega =(dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2
-            #print((dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DOmega/2,dOmegaL[j],dc0)
-            DK =twopi/T[j]/c[j]*(domega)
-            omega = twopi/T[j]
-            wvno  =  twopi/T[j]/C-DK
-            if isR:
-                det0 = dltarR(d,a,b,rho,wvno,omega,LN)
-            else:
-                det0 = dltarL(d,a,b,rho,wvno,omega,LN)
-            omega = twopi/T[j]
-            wvno  =  twopi/T[j]/C+DK
-            if isR:
-                dK = (dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DK/2
-            else:
-                dK = (dltarL(d,a,b,rho,wvno,omega,LN)-det0)/DK/2
-            #
-            K[i,j]=(-dK/dOmega-gL[j])/dc0
-            print(dK/dOmega,gL[j],(-dK/dOmega-gL[j]),dOmega*dc0,dOmega)
-            #print(dK/dOmega,gL[j],dK,dOmega)
-            #print(dKdV,dOmegadV,dltarR(d,a,b,rho,wvno,omega,LN),det0,omega,wvno,DK,dc0)
-            #print((dltarR(d,a,b,rho,wvno,omega,LN)-det0)/DK/2-dKL[j],dc0)
-        if isS:
-            if smoothN==1:
-                if isFlat:
-                    B[i]=B[i]-dc0
-                    sphere(D, A, B, Rho, LN,isR, ar)
-                else:
-                    b[i]=b[i]-dc0
-            else:
-                if isFlat:
-                    for j in xrange(-smoothN+1,smoothN):
-                        B[i+j]=B[i+j]-dc0*(1-<double>j/<double>smoothN)/DW
-                    sphere(D, A, B, Rho, LN,isR, ar)
-                else:
-                    for j in xrange(-smoothN+1,smoothN):
-                        b[i+j]=b[i+j]-dc0*(1-<double>j/<double>smoothN)/DW
-    return K
-cdef int CalDisp(double[:] D,double[:] A,double[:] B,double[:] Rho,double[:] T,double[:] c,int LN, int TN=1 ,int mode=1,bint isR=True,double sone0=1.5,double dc0=0.005,bint isFlat=False,double ar=6370):
+cdef int CalDisp(double[:] D,double[:] A,double[:] B,double[:] Rho,double[:] T,double[:] c,double[:]Qp,double[:]Qs,double fRef,int LN, int TN=1 ,int mode=1,bint isR=True,double sone0=1.5,double dc0=0.005,bint isFlat=False,double ar=6370):
     global del1st#,a,b,d,rho
     cdef int index,jsol,m,k,loop,i
     cdef double betmn,betmx,cc1,cc,c1,dc,cm,onea,t1,clow,
@@ -754,7 +450,7 @@ cdef int CalDisp(double[:] D,double[:] A,double[:] B,double[:] Rho,double[:] T,d
             #return 0
             #print(d,a,b,rho,t1,c1,clow,dc,cm,betmx,isR,ifirst,LN)
             #return 0
-            c[k]=getsol(d,a,b,rho,t1,c1,clow,dc,cm,betmx,isR,ifirst,LN)
+            c[k]=getsol(d,a,b,rho,Qp,Qs,fRef,t1,c1,clow,dc,cm,betmx,isR,ifirst,LN)
             #if c[k]<0:
             #    print(c1,clow,dc,cm,betmx,t1)
             #print(del1st)
@@ -830,7 +526,7 @@ cdef double gtsolh(double a, double b):
     return c
 
 #@jit
-cdef double dltarL(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,double omega,int LN):
+cdef double dltarL(double[:]d,double[:]a,double[:]b,double[:]rho,double[:]Qp,double[:]Qs,double fRef,double wvno,double omega,int LN):
     '''
     c   find SH dispersion values.
     c
@@ -845,20 +541,26 @@ cdef double dltarL(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,dou
     c   to surface.
     c
     '''
-    cdef double xkb, wvnop,wvnom,rb,e1,e2,xmu,q,y,z,cosq,fac,sinq,e10,e20,xnor,ynor
+    cdef double xkb, wvnop,wvnom,rb,e1,e2,xmu,q,y,z,cosq,fac,sinq,e10,e20,xnor,ynor,B,omegaRef=fRef*2*3.141592657589793
     cdef int i0
-    xkb=omega/b[LN-1]
+    B = b[LN-1]
+    if Qs[LN-1]>0.0:
+        B = B*(1+1/3.141592657589793/Qs[LN-1]*log(omega/omegaRef))
+    xkb=omega/B
     wvnop=wvno+xkb
     wvnom=abs(wvno-xkb)
     rb=sqrt(wvnop*wvnom)
     e1=rho[LN-1]*rb
-    e2=1/(b[LN-1]*b[LN-1])
+    e2=1/(B*B)
     i0=0
     if b[0]<0.001:
         i0=1
     for m in xrange(LN-2,i0-1,-1):
-        xmu=rho[m]*b[m]*b[m]
-        xkb=omega/b[m]
+        B = b[m]
+        if Qs[m]>0.0:
+            B = B*(1+1/3.141592657589793/Qs[m]*log(omega/omegaRef))
+        xmu=rho[m]*B*B
+        xkb=omega/B
         wvnop=wvno+xkb
         wvnom=abs(wvno-xkb)
         rb=sqrt(wvnop*wvnom)
@@ -892,23 +594,30 @@ cdef double dltarL(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,dou
         e2=e20/xnor
     return e1
 #@jit
-cdef double dltarR(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,double omega,int LN):
+cdef double dltarR(double[:]d,double[:]a,double[:]b,double[:]rho,double[:]Qp,double[:]Qs,double fRef,double wvno,double omega,int LN):
     #print(LN)
     #cdef double a0, w,cosp,a0,cpcq,cpy,cpz,cqw,cqx,xy,xz,wy,wz
     global E0,E1,E2,E3,E4
     global E01,E11,E21,E31,E41,cosp,w0
-    cdef double wvno2,xka,xkb,wvnop,wvnom,ra,rb,gammk,gam,gamm1,rho1,t,p,q,tmp,dpth,znul
+    cdef double wvno2,xka,xkb,wvnop,wvnom,ra,rb,gammk,gam,gamm1,rho1,t,p,q,tmp,dpth,znul,A,B,omegaRef=fRef*2*3.141592657589793
     cdef int i0=1
     wvno2=wvno*wvno
-    xka=omega/a[LN-1]
-    xkb=omega/b[LN-1]
+    A = a[LN-1]
+    if Qp[LN-1]>0.0:
+        A = A*(1+1/3.141592657589793/Qp[LN-1]*log(omega/omegaRef))
+        #A =
+    B = b[LN-1]
+    if Qs[LN-1]>0.0:
+        B = B*(1+1/3.141592657589793/Qs[LN-1]*log(omega/omegaRef))
+    xka=omega/A
+    xkb=omega/B
     wvnop=wvno+xka
     wvnom=abs(wvno-xka)
     ra=sqrt(wvnop*wvnom)
     wvnop=wvno+xkb
     wvnom=abs(wvno-xkb)
     rb=sqrt(wvnop*wvnom)
-    t = b[LN-1]/omega
+    t = B/omega
     #E matrix for the bottom half-space.
     gammk = 2.0*t*t
     gam   = gammk*wvno2
@@ -924,9 +633,16 @@ cdef double dltarR(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,dou
     if b[0]<0.001:
         i0=1
     for m in xrange(LN-2,i0-1,-1):
-        xka = omega/a[m]
-        xkb = omega/b[m]
-        t = b[m]/omega
+        A = a[m]
+        if Qp[m]>0.0:
+            A = A*(1+1/3.141592657589793/Qp[m]*log(omega/omegaRef))
+            #A =
+        B = b[m]
+        if Qs[m]>0.0:
+            B = B*(1+1/3.141592657589793/Qs[m]*log(omega/omegaRef))
+        xka = omega/A
+        xkb = omega/B
+        t = B/omega
         gammk = 2*t*t
         gam = gammk*wvno2
         wvnop=wvno+xka
@@ -973,7 +689,10 @@ cdef double dltarR(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,dou
         #print(ca01,ca02,ca03,ca04)
     if i0==1:
         #include water layer.
-        xka = omega/a[0]
+        A = a[0]
+        if Qp[0]>0:
+            A = A*(1+1/3.141592657589793/Qp[0]*log(omega/omegaRef))
+        xka = omega/A
         wvnop=wvno+xka
         wvnom=abs(wvno-xka)
         ra=sqrt(wvnop*wvnom)
@@ -988,147 +707,9 @@ cdef double dltarR(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,dou
         return E0
 
 
-cdef double dltarL_(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,double omega,int LN):
-    '''
-    c   find SH dispersion values.
-    c
-        parameter (NL=100,NP=60)
-        implicit double precision (a-h,o-z)
-        real*4 d(NL),a(NL),b(NL),rho(NL),rtp(NL),dtp(NL),btp(NL)
-        integer llw,LN
-    c        common/modl/ d,a,b,rho,rtp,dtp,btp
-    c        common/para/ LN,llw,twopi
-    c
-    c   Haskell-Thompson love wave formulation from halfspace
-    c   to surface.
-    c
-    '''
-    cdef double xkb, wvnop,wvnom,rb,e1,e2,xmu,q,y,z,cosq,fac,sinq,e10,e20,xnor,ynor
-    cdef int i0
-    xkb=omega/b[LN-1]
-    wvnop=wvno+xkb
-    wvnom=abs(wvno-xkb)
-    rb=sqrt(wvnop*wvnom)
-    e1=rho[LN-1]*rb
-    e2=1/(b[LN-1]*b[LN-1])
-    i0=0
-    if b[0]<0.001:
-        i0=1
-    for m in xrange(LN-2,i0-1,-1):
-        xmu=rho[m]*b[m]*b[m]
-        xkb=omega/b[m]
-        wvnop=wvno+xkb
-        wvnom=abs(wvno-xkb)
-        rb=sqrt(wvnop*wvnom)
-        q = d[m]*rb
-        if(wvno<xkb):
-            sinq = sin(q)
-            y = sinq/rb
-            z = -rb*sinq
-            cosq = cos(q)
-        elif(wvno==xkb):
-            cosq=1.000
-            y=d[m]
-            z=0.00
-        else:
-            fac = 0.000
-            if(q<16):
-                fac = exp(-2.0*q)
-            cosq = ( 1.000 + fac ) * 0.500
-            sinq = ( 1.000 - fac ) * 0.500
-            y = sinq/rb
-            z = rb*sinq
-        e10=e1*cosq+e2*xmu*z
-        e20=e1*y/xmu+e2*cosq
-        xnor=1.000
-        e1=e10/xnor
-        e2=e20/xnor
-    return e1
 #@jit
-cdef double dltarR_(double[:]d,double[:]a,double[:]b,double[:]rho,double wvno,double omega,int LN):
-    #print(LN)
-    #cdef double a0, w,cosp,a0,cpcq,cpy,cpz,cqw,cqx,xy,xz,wy,wz
-    global E0,E1,E2,E3,E4
-    global E01,E11,E21,E31,E41,cosp,w0
-    cdef double wvno2,xka,xkb,wvnop,wvnom,ra,rb,gammk,gam,gamm1,rho1,t,p,q,tmp,dpth,znul
-    cdef int i0=1
-    wvno2=wvno*wvno
-    xka=omega/a[LN-1]
-    xkb=omega/b[LN-1]
-    wvnop=wvno+xka
-    wvnom=abs(wvno-xka)
-    ra=sqrt(wvnop*wvnom)
-    wvnop=wvno+xkb
-    wvnom=abs(wvno-xkb)
-    rb=sqrt(wvnop*wvnom)
-    t = b[LN-1]/omega
-    #E matrix for the bottom half-space.
-    gammk = 2.0*t*t
-    gam   = gammk*wvno2
-    gamm1 = gam - 1
-    rho1  = rho[LN-1]
-    E0=rho1*rho1*(gamm1*gamm1-gam*gammk*ra*rb)
-    E1=(-rho1*ra)
-    E2=(rho1*(gamm1-gammk*ra*rb))
-    E3=(rho1*rb)
-    E4=(wvno2-ra*rb)
-    #matrix multiplication from bottom layer upward
-    i0=0
-    if b[0]<0.001:
-        i0=1
-    for m in xrange(LN-2,i0-1,-1):
-        xka = omega/a[m]
-        xkb = omega/b[m]
-        t = b[m]/omega
-        gammk = 2*t*t
-        gam = gammk*wvno2
-        wvnop=wvno+xka
-        wvnom=abs(wvno-xka)
-        ra= sqrt(wvnop*wvnom)
-        wvnop=wvno+xkb
-        wvnom=abs(wvno-xkb)
-        rb=sqrt(wvnop*wvnom)
-        dpth=d[m]
-        rho1=rho[m]
-        p=ra*dpth
-        q=rb*dpth
-        #evaluate cosP, cosQ,.... in var.#
-        # evaluate Dunkin's matrix in dnka.
-        var(p,q,ra,rb,wvno,xka,xkb,dpth)#,a0,cpcq,cpy,cpz,cqw,cqx,xy,xz,wy,wz)
-        dnka(wvno2,gam,gammk,rho1)#,,a0)cpcq,cpy,cpz,cqw,cqx,xy,xz,wy,wz)
-        #print(ca) 
-        E01 = E0*ca00+E1*ca10+E2*ca20+E3*ca30+E4*ca40
-        E11 = E0*ca01+E1*ca11+E2*ca21+E3*ca31+E4*ca41
-        E21 = E0*ca02+E1*ca12+E2*ca22+E3*ca32+E4*ca42
-        E31 = E0*ca03+E1*ca13+E2*ca23+E3*ca33+E4*ca43
-        E41 = E0*ca04+E1*ca14+E2*ca24+E3*ca34+E4*ca44
-        tmp=1
-        E0 = E01/tmp
-        E1 = E11/tmp
-        E2 = E21/tmp
-        E3 = E31/tmp
-        E4 = E41/tmp
-        #e[:]=ee[:]
-        #print(e)
-        #print(E0,E1, E2, E3, E4)
-        #print(ca01,ca02,ca03,ca04)
-    if i0==1:
-        #include water layer.
-        xka = omega/a[0]
-        wvnop=wvno+xka
-        wvnom=abs(wvno-xka)
-        ra=sqrt(wvnop*wvnom)
-        dpth=d[0]
-        rho1=rho[0]
-        p = ra*dpth
-        znul = 1e-5
-        var(p,znul,ra,znul,wvno,xka,znul,dpth)
-        w0=-rho1*w
-        return cosp*E0 + w0*E1
-    else:
-        return E0
 #@jit
-cdef double getsol(double[:] d,double[:]a,double[:]b,double[:]rho,double t1,double c1,double clow,double dc,double cm,double betmx,bint isR,bint ifirst,int LN):
+cdef double getsol(double[:] d,double[:]a,double[:]b,double[:]rho,double[:]Qp,double[:]Qs,double fRef,double t1,double c1,double clow,double dc,double cm,double betmx,bint isR,bint ifirst,int LN):
     global del1st
 
     '''
@@ -1167,9 +748,9 @@ cdef double getsol(double[:] d,double[:]a,double[:]b,double[:]rho,double t1,doub
     #print(d[0],a[0],rho[0],wvno,omega,LN)
     #return 0
     if isR :
-        del1 = dltarR(d,a,b,rho,wvno,omega,LN)
+        del1 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
     else:
-        del1 = dltarL(d,a,b,rho,wvno,omega,LN)
+        del1 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
     #return 0
     if ifirst:
         del1st = del1
@@ -1193,7 +774,7 @@ cdef double getsol(double[:] d,double[:]a,double[:]b,double[:]rho,double t1,doub
     '''
     if c1<0:
         return -3.0
-    for i in xrange(3000):
+    for i in xrange(int(10/dc)):
         if(idir>0):
             c2 = c1 + dc
         else:
@@ -1209,9 +790,9 @@ cdef double getsol(double[:] d,double[:]a,double[:]b,double[:]rho,double t1,doub
         #if ifirst:
         wvno=omega/c2
         if isR :
-            del2 = dltarR(d,a,b,rho,wvno,omega,LN)
+            del2 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         else:
-            del2 = dltarL(d,a,b,rho,wvno,omega,LN)
+            del2 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         if not (sign(del1)!=sign(del2)):
             c1=c2
             del1=del2
@@ -1221,14 +802,14 @@ cdef double getsol(double[:] d,double[:]a,double[:]b,double[:]rho,double t1,doub
                 return -1
             continue
         else:
-            cn=nevill(d,a,b,rho,t1,c1,c2,del1,del2,isR,twopi,LN)
+            cn=nevill(d,a,b,rho,Qp,Qs,fRef,t1,c1,c2,del1,del2,isR,twopi,LN)
             c1 = cn
             if(c1>(betmx)):
                 return -1.0
             return c1
     return c1
 #@jit
-cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double t,double c1,double c2,double del1,double del2,bint isR,double twopi,int LN) except? -2.0:
+cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double[:]Qp,double[:]Qs,double fRef,double t,double c1,double c2,double del1,double del2,bint isR,double twopi,int LN) except? -2.0:
     '''
     c-----
     c   hybrid method for refining root once it has been bracketted
@@ -1258,9 +839,9 @@ cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double t,do
     c3 = 0.5*(c1 + c2)
     wvno=omega/c3
     if isR :
-        del3 = dltarR(d,a,b,rho,wvno,omega ,LN)
+        del3 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega ,LN)
     else:
-        del3 = dltarL(d,a,b,rho,wvno,omega,LN)
+        del3 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
     nev = 1
     #100 continue
     for nctrl in xrange(100):
@@ -1275,9 +856,9 @@ cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double t,do
             c3 = 0.5*(c1 + c2)
             wvno=omega/c3
             if isR :
-                del3 = dltarR(d,a,b,rho,wvno,omega ,LN)
+                del3 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega ,LN)
             else:
-                del3 = dltarL(d,a,b,rho,wvno,omega,LN)
+                del3 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
         s13 = del1 - del3
         s32 = del3 - del2
         '''
@@ -1305,9 +886,9 @@ cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double t,do
             c3 = 0.5*(c1 + c2)
             wvno=omega/c3
             if isR :
-                del3 = dltarR(d,a,b,rho,wvno,omega ,LN)
+                del3 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega ,LN)
             else:
-                del3 = dltarL(d,a,b,rho,wvno,omega,LN)
+                del3 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
             nev = 1
             m = 0
         else:
@@ -1337,9 +918,9 @@ cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double t,do
                 c3 = 0.5*(c1 + c2)
                 wvno=omega/c3
                 if isR :
-                    del3 = dltarR(d,a,b,rho,wvno,omega ,LN)
+                    del3 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega ,LN)
                 else:
-                    del3 = dltarL(d,a,b,rho,wvno,omega,LN)
+                    del3 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
                 nev = 1
                 m = 1
                 isBreak=True
@@ -1348,9 +929,9 @@ cdef double nevill(double[:] d,double[:] a,double[:] b,double[:] rho,double t,do
             c3 = X[0]
             wvno = omega/c3
             if isR :
-                del3 = dltarR(d,a,b,rho,wvno,omega,LN)
+                del3 = dltarR(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
             else:
-                del3 = dltarL(d,a,b,rho,wvno,omega,LN)
+                del3 = dltarL(d,a,b,rho,Qp,Qs,fRef,wvno,omega,LN)
             nev = 2
             m = m + 1
             if(m>9):

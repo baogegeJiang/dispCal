@@ -42,8 +42,15 @@ KP = calDisp(thickness, vp, vs, rho, periods,wave='rayleigh', mode=1, velocity='
 #group velocity kernel
 KSG = calDisp(thickness, vp, vs, rho, periods,wave='rayleigh', mode=1, velocity='kernelGroup', flat_earth=True,ar=6370,dc0=0.005,domega=0.0001,parameter='vs')
 KPG = calDisp(thickness, vp, vs, rho, periods,wave='rayleigh', mode=1, velocity='kernelGroup', flat_earth=True,ar=6370,dc0=0.005,domega=0.0001,parameter='vp')
+#consider the quality factor(new in 0.2.1).Qp and Qs is the Q for P and S phase, respectively. fRef is reference frequency, which is usually 1 Hz.
+velocities = calDisp(thickness, vp, vs, rho, periods,wave='love', mode=1, velocity='phase', flat_earth=True,ar=6370,dc0=0.005,Qp=vp*0+1000,Qs=vp*0+500,fRef=1.0)
+#for some model providing Qk and Qmu, convert the Qk to Qp(also called Qa), and Qmu=Qs(new in 0.2.1)
+from dispCal.disp import toQa
+Qk=vp*0+1000
+Qmu=vp*0+500
+Qp=toQa(vp,vs,Qk,Qmu)
+Qs=Qmu
 ```
-
 One need to notice that the kernel is just like  K = dc/dm. The m are the paramters of the model. If you want to plot the kernel, it's better to divide it by the thickness (if the parameter is not the thickness it self).
 
 ---

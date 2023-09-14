@@ -9,7 +9,7 @@ from Cython.Distutils import build_ext
 
 setup(
     name='dispCal',
-    version='0.1.4',
+    version='0.2.3',
     description='Calculate Surface Wave Dispersion',
     author='baogege(Jiang Yiran)',
     author_email="baogege@pku.edu.cn",

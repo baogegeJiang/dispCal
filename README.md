@@ -1,4 +1,4 @@
-# dispCal ![PyPI Downloads](https://static.pepy.tech/badge/dispcal)![PyPI Downloads](https://static.pepy.tech/badge/dispcal/month)
+# dispCal ![PyPI Downloads](https://static.pepy.tech/badge/dispcal)  ![PyPI Downloads](https://static.pepy.tech/badge/dispcal/month)
 
 This is a python package based on cython to calculate the dispersion curves and their kernels with respect to the layers velocities, density and thickness. It is modified from Herrmann's seismic computation programs. To reduce the calculation cost, I use the local gradient to estimate the group velocity and sensitive kernels. Using the cyhon to speed up, it  have similar efficiency with the original fortran ones.
 
